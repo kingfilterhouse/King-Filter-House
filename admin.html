@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0066FF">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KFH">
+
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Aasan ERP</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:       #0A0F1E;
+            --surface:  #141A2E;
+            --elevated: #1E2538;
+            --border:   #2A3347;
+            --hover:    #252D42;
+            --primary:  #0066FF;
+            --success:  #00C853;
+            --warning:  #FFB300;
+            --danger:   #FF1744;
+            --text:     #FFFFFF;
+            --muted:    #A0A8C4;
+            --dim:      #6B7694;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* ===== LOGIN ===== */
+        #login-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .login-box h1 {
+            font-size: 22px;
+            margin-bottom: 6px;
+        }
+
+        .login-box p {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        input {
+            width: 100%;
+            background: var(--elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-size: 14px;
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        .btn {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: #000; }
+        .btn-warning { background: var(--warning); color: #000; }
+        .btn-danger  { background: var(--danger);  color: white; }
+        .btn-ghost   { background: var(--elevated); color: var(--muted); border: 1px solid var(--border); }
+
+        .btn-sm {
+            width: auto;
+            padding: 7px 14px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+
+        .error-msg {
+            background: rgba(255,23,68,0.1);
+            border: 1px solid rgba(255,23,68,0.3);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #ff6b8a;
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        /* ===== ADMIN DASHBOARD ===== */
+        #admin-screen { display: none; }
+
+        .topbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .topbar h1 { font-size: 18px; }
+        .topbar span { color: var(--muted); font-size: 13px; }
+
+        .logout-btn {
+            background: var(--elevated);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .content { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+        /* ===== STATS ROW ===== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .stat-card .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+        .stat-card .value { font-size: 26px; font-weight: 700; }
+        .stat-card .sub   { color: var(--dim); font-size: 11px; margin-top: 4px; }
+
+        /* ===== SEARCH + CONTROLS ===== */
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            margin: 0;
+        }
+
+        .filter-btn {
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--elevated);
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* ===== CLIENTS TABLE ===== */
+        .table-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        thead { background: var(--elevated); }
+        th {
+            padding: 13px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 14px 16px;
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tr:hover td { background: var(--hover); }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-active   { background: rgba(0,200,83,0.15);  color: #00C853; }
+        .badge-expiring { background: rgba(255,179,0,0.15);  color: #FFB300; }
+        .badge-expired  { background: rgba(255,87,34,0.15);  color: #FF5722; }
+        .badge-disabled { background: rgba(255,23,68,0.15);  color: #FF1744; }
+
+        .client-name { font-weight: 600; color: var(--text); }
+        .client-email { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .modal h3 { font-size: 17px; margin-bottom: 6px; }
+        .modal p  { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-actions .btn { margin: 0; }
+
+        .extend-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .extend-opt {
+            background: var(--elevated);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .extend-opt:hover, .extend-opt.selected {
+            border-color: var(--primary);
+            background: rgba(0,102,255,0.1);
+        }
+
+        .extend-opt .days  { font-size: 20px; font-weight: 700; color: var(--primary); }
+        .extend-opt .label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--success);
+            color: #000;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 9999;
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0);   opacity: 1; }
+        }
+
+        .loading { text-align: center; padding: 40px; color: var(--muted); }
+        .empty   { text-align: center; padding: 48px; color: var(--dim); }
+
+        @media (max-width: 600px) {
+            th:nth-child(3), td:nth-child(3),
+            th:nth-child(4), td:nth-child(4) { display: none; }
+            .content { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen">
+    <div class="login-box">
+        <h1>🔐 Admin Panel</h1>
+        <p>Aasan ERP — Client Management</p>
+        <div class="error-msg" id="login-error"></div>
+        <input type="email"    id="admin-email"    placeholder="Admin Email"    />
+        <input type="password" id="admin-password" placeholder="Admin Password" />
+        <button class="btn btn-primary" onclick="adminLogin()">Sign In →</button>
+    </div>
+</div>
+
+<!-- ===== ADMIN DASHBOARD ===== -->
+<div id="admin-screen">
+    <div class="topbar">
+        <div>
+            <h1>⚡ Client Dashboard</h1>
+            <span id="last-updated">Loading...</span>
+        </div>
+        <button class="logout-btn" onclick="adminLogout()">Sign Out</button>
+    </div>
+
+    <div class="content">
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="label">Total Clients</div>
+                <div class="value" id="stat-total">—</div>
+                <div class="sub">All registered</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Active</div>
+                <div class="value" style="color:var(--success)" id="stat-active">—</div>
+                <div class="sub">Paying clients</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Expiring Soon</div>
+                <div class="value" style="color:var(--warning)" id="stat-expiring">—</div>
+                <div class="sub">Within 7 days</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Expired</div>
+                <div class="value" style="color:var(--danger)" id="stat-expired">—</div>
+                <div class="sub">Need renewal</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Monthly Revenue</div>
+                <div class="value" style="color:var(--primary)" id="stat-revenue">—</div>
+                <div class="sub">Active × PKR 3,000</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <input class="search-input" type="text" placeholder="🔍 Search by name or email..." oninput="filterClients(this.value)" />
+            <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+            <button class="filter-btn" onclick="setFilter('active', this)">Active</button>
+            <button class="filter-btn" onclick="setFilter('expiring', this)">Expiring</button>
+            <button class="filter-btn" onclick="setFilter('expired', this)">Expired</button>
+            <button class="filter-btn" onclick="setFilter('disabled', this)">Disabled</button>
+            <button class="filter-btn" onclick="loadClients()" style="margin-left:auto;">🔄 Refresh</button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+            <div class="loading" id="table-loading">Loading clients...</div>
+            <div class="empty" id="table-empty" style="display:none;">No clients found</div>
+            <table id="clients-table" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th>Expires</th>
+                        <th>Days Left</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="clients-body"></tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== EXTEND MODAL ===== -->
+<div class="modal-overlay" id="extend-modal">
+    <div class="modal">
+        <h3>💳 Payment Received</h3>
+        <p id="extend-client-name">Client name</p>
+
+        <div class="extend-options">
+            <div class="extend-opt selected" onclick="selectDays(30, this)">
+                <div class="days">30</div>
+                <div class="label">Days / PKR 3,000</div>
+            </div>
+            <div class="extend-opt" onclick="selectDays(60, this)">
+                <div class="days">60</div>
+                <div class="label">Days / PKR 6,000</div>
+            </div>
+            <div class="extend-opt" onclick="selectDays(90, this)">
+                <div class="days">90</div>
+                <div class="label">Days / PKR 9,000</div>
+            </div>
+            <div class="extend-opt" onclick="selectDays(365, this)">
+                <div class="days">365</div>
+                <div class="label">Days / PKR 30,000</div>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-success" onclick="confirmExtend()">✅ Confirm & Extend</button>
+            <button class="btn btn-ghost"   onclick="closeModal('extend-modal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== DISABLE MODAL ===== -->
+<div class="modal-overlay" id="disable-modal">
+    <div class="modal">
+        <h3>🔴 Disable Account</h3>
+        <p id="disable-client-name">Client name</p>
+        <p style="color:var(--danger);font-size:13px;margin-bottom:0;">
+            Client will be locked out immediately. They will see a payment required screen.
+            You can re-enable anytime after payment.
+        </p>
+        <div class="modal-actions">
+            <button class="btn btn-danger" onclick="confirmDisable()">🔒 Disable Now</button>
+            <button class="btn btn-ghost"  onclick="closeModal('disable-modal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//  CONFIG — Replace with your Supabase credentials
+// ============================================================
+const SUPABASE_URL = 'https://zwjgrrkojriokfxuupiv.supabase.co';  // Example: https://xxxxx.supabase.co
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3amdycmtvanJpb2tmeHV1cGl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3Nzg1NTcsImV4cCI6MjA4NTM1NDU1N30.W0s_yYTZGDjsmCf4b09B7qz3D9KeWM1nAQIfOrCnyE4';  // Your anon public key
+const ADMIN_EMAIL      = 'shezii3344@gmail.com';     // your login email
+
+// ============================================================
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let allClients   = [];
+let currentFilter = 'all';
+let activeClientId = null;
+let selectedDays   = 30;
+
+// ===== LOGIN =====
+async function adminLogin() {
+    const email    = document.getElementById('admin-email').value.trim();
+    const password = document.getElementById('admin-password').value.trim();
+    const errEl    = document.getElementById('login-error');
+
+    errEl.style.display = 'none';
+
+    if (!email || !password) {
+        errEl.textContent = 'Please enter email and password';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    // Only allow admin email
+    if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+        errEl.textContent = '🔒 Access denied — not an admin account';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+
+    if (error) {
+        errEl.textContent = error.message;
+        errEl.style.display = 'block';
+        return;
+    }
+
+    showAdmin();
+}
+
+async function adminLogout() {
+    await db.auth.signOut();
+    document.getElementById('admin-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showAdmin() {
+    document.getElementById('login-screen').style.display  = 'none';
+    document.getElementById('admin-screen').style.display  = 'block';
+    loadClients();
+}
+
+// ===== LOAD CLIENTS =====
+async function loadClients() {
+    document.getElementById('table-loading').style.display = 'block';
+    document.getElementById('clients-table').style.display = 'none';
+    document.getElementById('table-empty').style.display   = 'none';
+
+    // Get all profiles + join with auth users via admin API
+    // We use the profiles table + service role in real use
+    // For anon key, we query profiles and match emails separately
+    const { data: profiles, error } = await db
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        document.getElementById('table-loading').textContent = '❌ Error: ' + error.message;
+        return;
+    }
+
+    // Get current admin user id to exclude from list
+    const { data: { user: adminUser } } = await db.auth.getUser();
+    const adminId = adminUser?.id;
+
+    // Filter out admin's own profile from client list
+    allClients = (profiles || []).filter(p => p.id !== adminId).map(p => {
+        const now      = new Date();
+        const expires  = new Date(p.subscription_expires_at);
+        const daysLeft = Math.ceil((expires - now) / 86400000);
+
+        let status;
+        if (!p.is_active)      status = 'disabled';
+        else if (expires < now) status = 'expired';
+        else if (daysLeft <= 7) status = 'expiring';
+        else                    status = 'active';
+
+        return { ...p, daysLeft, status, expiresDate: expires };
+    });
+
+    updateStats();
+    renderTable(allClients);
+
+    const now = new Date();
+    document.getElementById('last-updated').textContent =
+        'Updated ' + now.toLocaleTimeString();
+}
+
+// ===== STATS =====
+function updateStats() {
+    const total    = allClients.length;
+    const active   = allClients.filter(c => c.status === 'active').length;
+    const expiring = allClients.filter(c => c.status === 'expiring').length;
+    const expired  = allClients.filter(c => c.status === 'expired' || c.status === 'disabled').length;
+
+    document.getElementById('stat-total').textContent    = total;
+    document.getElementById('stat-active').textContent   = active;
+    document.getElementById('stat-expiring').textContent = expiring;
+    document.getElementById('stat-expired').textContent  = expired;
+    document.getElementById('stat-revenue').textContent  =
+        'PKR ' + ((active + expiring) * 3000).toLocaleString();
+}
+
+// ===== RENDER TABLE =====
+function renderTable(clients) {
+    document.getElementById('table-loading').style.display = 'none';
+
+    if (!clients.length) {
+        document.getElementById('table-empty').style.display = 'block';
+        return;
+    }
+
+    document.getElementById('clients-table').style.display = 'table';
+    const tbody = document.getElementById('clients-body');
+
+    tbody.innerHTML = clients.map(c => {
+        const badgeClass = {
+            active:   'badge-active',
+            expiring: 'badge-expiring',
+            expired:  'badge-expired',
+            disabled: 'badge-disabled'
+        }[c.status];
+
+        const badgeLabel = {
+            active:   '✅ Active',
+            expiring: '⚠️ Expiring',
+            expired:  '❌ Expired',
+            disabled: '🔒 Disabled'
+        }[c.status];
+
+        const daysText = c.status === 'disabled'
+            ? '—'
+            : c.daysLeft < 0
+                ? `${Math.abs(c.daysLeft)}d ago`
+                : `${c.daysLeft}d`;
+
+        const expireStr = c.expiresDate.toLocaleDateString('en-PK', {
+            day: '2-digit', month: 'short', year: 'numeric'
+        });
+
+        return `
+        <tr>
+            <td>
+                <div class="client-name">${c.full_name || 'Unknown'}</div>
+                <div class="client-email">${c.business_name || '—'}</div>
+            </td>
+            <td><span class="badge ${badgeClass}">${badgeLabel}</span></td>
+            <td style="color:var(--muted)">${expireStr}</td>
+            <td style="color:${c.daysLeft <= 7 ? 'var(--warning)' : 'var(--muted)'};font-weight:600">
+                ${daysText}
+            </td>
+            <td>
+                <div class="actions">
+                    <button class="btn btn-success btn-sm"
+                        onclick="openExtendModal('${c.id}', '${(c.full_name||'Client').replace(/'/g,"\\'")}')">
+                        💳 Paid
+                    </button>
+                    ${c.is_active !== false ? `
+                    <button class="btn btn-danger btn-sm"
+                        onclick="openDisableModal('${c.id}', '${(c.full_name||'Client').replace(/'/g,"\\'")}')">
+                        🔒 Disable
+                    </button>` : `
+                    <button class="btn btn-warning btn-sm"
+                        onclick="reEnable('${c.id}')">
+                        🔓 Re-enable
+                    </button>`}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// ===== FILTER =====
+function setFilter(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilter();
+}
+
+function filterClients(search) {
+    applyFilter(search);
+}
+
+function applyFilter(search = '') {
+    let filtered = allClients;
+
+    if (currentFilter !== 'all') {
+        filtered = filtered.filter(c => c.status === currentFilter);
+    }
+
+    if (search) {
+        const s = search.toLowerCase();
+        filtered = filtered.filter(c =>
+            (c.full_name     || '').toLowerCase().includes(s) ||
+            (c.business_name || '').toLowerCase().includes(s)
+        );
+    }
+
+    renderTable(filtered);
+}
+
+// ===== EXTEND MODAL =====
+function openExtendModal(clientId, clientName) {
+    activeClientId = clientId;
+    selectedDays   = 30;
+    document.getElementById('extend-client-name').textContent =
+        clientName + ' — Select payment period:';
+    // Reset selection
+    document.querySelectorAll('.extend-opt').forEach((el, i) => {
+        el.classList.toggle('selected', i === 0);
+    });
+    document.getElementById('extend-modal').classList.add('open');
+}
+
+function selectDays(days, el) {
+    selectedDays = days;
+    document.querySelectorAll('.extend-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+}
+
+async function confirmExtend() {
+    if (!activeClientId) return;
+
+    // Calculate new expiry: extend from TODAY or from current expiry (whichever is later)
+    const client  = allClients.find(c => c.id === activeClientId);
+    const now     = new Date();
+    const current = client?.expiresDate || now;
+    const base    = current > now ? current : now; // extend from current if still active
+
+    const newExpiry = new Date(base.getTime() + selectedDays * 86400000);
+
+    const { error } = await db
+        .from('profiles')
+        .update({
+            subscription_expires_at: newExpiry.toISOString(),
+            is_active: true
+        })
+        .eq('id', activeClientId);
+
+    if (error) {
+        showToast('❌ Error: ' + error.message, 'error');
+    } else {
+        showToast(`✅ Extended by ${selectedDays} days — expires ${newExpiry.toLocaleDateString()}`);
+        closeModal('extend-modal');
+        loadClients();
+    }
+}
+
+// ===== DISABLE MODAL =====
+function openDisableModal(clientId, clientName) {
+    activeClientId = clientId;
+    document.getElementById('disable-client-name').textContent =
+        'Disable account for: ' + clientName;
+    document.getElementById('disable-modal').classList.add('open');
+}
+
+async function confirmDisable() {
+    const { error } = await db
+        .from('profiles')
+        .update({ is_active: false })
+        .eq('id', activeClientId);
+
+    if (error) {
+        showToast('❌ Error: ' + error.message, 'error');
+    } else {
+        showToast('🔒 Account disabled — client is now locked out');
+        closeModal('disable-modal');
+        loadClients();
+    }
+}
+
+// ===== RE-ENABLE =====
+async function reEnable(clientId) {
+    const newExpiry = new Date(Date.now() + 30 * 86400000);
+
+    const { error } = await db
+        .from('profiles')
+        .update({
+            is_active: true,
+            subscription_expires_at: newExpiry.toISOString()
+        })
+        .eq('id', clientId);
+
+    if (error) {
+        showToast('❌ Error: ' + error.message, 'error');
+    } else {
+        showToast('✅ Account re-enabled — 30 days added');
+        loadClients();
+    }
+}
+
+// ===== UTILS =====
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    activeClientId = null;
+}
+
+function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background  = type === 'error' ? 'var(--danger)' : 'var(--success)';
+    t.style.color       = type === 'error' ? 'white' : '#000';
+    t.style.display     = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
+
+// Close modal on outside click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => {
+        if (e.target === o) o.classList.remove('open');
+    });
+});
+
+// Check if already logged in
+(async () => {
+    const { data: { user } } = await db.auth.getUser();
+    if (user && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        showAdmin();
+    }
+})();
+</script>
+</body>
+</html>
