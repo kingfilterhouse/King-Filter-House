@@ -10064,126 +10064,330 @@ body.finance-unlocked .finance-eye-btn {
     }
 }
 
-/* ===== MOBILE UI FIXES ===== */
+/* =======================================================
+   MOBILE UI OVERHAUL — Complete rewrite
+   Fixes: FAB overlap, hamburger overlap, modal scroll,
+   filter bar wrap, page header, invoice template tab,
+   auth input icons, bottom nav spacing
+   ======================================================= */
 
-/* Settings modal: make body scrollable so Danger Zone is always reachable */
+/* ─── Z-INDEX HIERARCHY (mobile) ─────────────────────── */
+/* bottom-nav: 1000 | hamburger: 1100 | drawer-overlay: 1200 | drawer: 1300 */
+/* FAB must be ABOVE bottom-nav (1000) but below drawer (1200) */
+
+/* ─── FAB: lift above bottom nav, no overlap ─────────── */
 @media (max-width: 768px) {
+    .fab-container {
+        bottom: calc(72px + env(safe-area-inset-bottom) + 12px) !important;
+        right: 1rem !important;
+        z-index: 1050 !important;
+    }
+    .fab-main {
+        width: 52px !important;
+        height: 52px !important;
+    }
+    .fab-actions {
+        bottom: 62px !important;
+        right: 0 !important;
+    }
+    .fab-action {
+        padding: 0.7rem 1rem !important;
+        font-size: 13px;
+    }
+    .fab-label {
+        font-size: 0.8rem !important;
+    }
+}
+
+/* ─── HAMBURGER: integrate into navbar, no floating overlap */
+@media (max-width: 768px) {
+    /* The hamburger is fixed — make it sit at the RIGHT of the navbar bar */
+    .mobile-menu-btn {
+        top: 0 !important;
+        right: 0 !important;
+        height: 52px !important;
+        width: 52px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(20,26,46,0.98) !important;
+        border: none !important;
+        border-left: 1px solid var(--color-border) !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        position: fixed !important;
+        z-index: 1100 !important;
+    }
+    /* Give navbar right padding so content doesn't go under hamburger */
+    .top-navbar {
+        padding: 0 56px 0 1rem !important;
+        min-height: 52px !important;
+        height: 52px !important;
+        align-items: center !important;
+    }
+    /* Shrink navbar-right icons to fit */
+    .navbar-right {
+        gap: 4px !important;
+    }
+    .nav-icon-btn {
+        width: 34px !important;
+        height: 34px !important;
+        padding: 0 !important;
+        font-size: 12px !important;
+    }
+    /* Hide desktop nav + user info text */
+    .nav-menu { display: none !important; }
+    .user-info { display: none !important; }
+    /* Navbar brand text compact */
+    .nav-brand .brand-text { font-size: 0.9rem !important; }
+    /* User avatar smaller */
+    .user-avatar {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 11px !important;
+    }
+}
+
+/* ─── MAIN CONTENT: clear both top navbar and bottom nav */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1rem 0.875rem calc(80px + env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* ─── BOTTOM NAV: proper safe area + above everything else */
+.bottom-nav {
+    z-index: 1000;
+}
+@media (max-width: 768px) {
+    .bottom-nav {
+        display: flex;
+        height: calc(56px + env(safe-area-inset-bottom));
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .bottom-nav-item span {
+        font-size: 0.58rem !important;
+    }
+}
+
+/* ─── MODALS: full-height sheet, always scrollable ─────── */
+@media (max-width: 768px) {
+    .modal-overlay {
+        align-items: flex-end !important;
+        padding: 0 !important;
+    }
     .modal-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 92vh !important;
+        margin: 0 !important;
+        border-radius: 1.25rem 1.25rem 0 0 !important;
+        position: relative !important;
+        bottom: auto !important;
         display: flex !important;
         flex-direction: column !important;
+        overflow: hidden !important;
+    }
+    .modal-header {
+        flex-shrink: 0;
     }
     .modal-body {
-        flex: 1;
+        flex: 1 1 auto !important;
         overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch;
-        max-height: calc(85vh - 120px);
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain;
     }
-    /* Settings sections spacing */
-    .settings-section {
-        padding-bottom: 1rem;
+    .modal-actions {
+        flex-shrink: 0;
+        padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)) !important;
+        background: var(--color-card);
+        border-top: 1px solid var(--color-border);
     }
-    /* Page header stack */
-    .page-header {
+}
+@media (max-width: 480px) {
+    .modal-container {
+        max-height: 96vh !important;
+    }
+}
+
+/* ─── INVOICE TEMPLATE MANAGER: fully usable on mobile ── */
+@media (max-width: 768px) {
+    #invoice-template-manager .modal-container {
+        max-height: 96vh !important;
+    }
+    /* Tab row: horizontally scrollable so tabs don't disappear */
+    #itm-inner > div:first-child {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        white-space: nowrap !important;
+        padding-bottom: 4px !important;
+    }
+    /* Template buttons: shrink on mobile */
+    #itm-inner button[id^="itm-tab"] {
+        font-size: 11px !important;
+        padding: 0.4rem 0.7rem !important;
+        min-width: 0 !important;
+        flex-shrink: 0 !important;
+        display: inline-flex !important;
+    }
+    /* Two-column layout in template: stack to single column */
+    #itm-inner > div {
+        flex-direction: column !important;
+    }
+    /* Preview frame: full width */
+    #itm-frame {
+        width: 100% !important;
+        min-height: 280px !important;
+        overflow-x: auto !important;
+    }
+    /* Business info form: full width inputs */
+    #itm-bname, #itm-btag, #itm-bphone, #itm-baddress, #itm-bthanks {
+        width: 100% !important;
+        font-size: 16px !important;
+    }
+}
+
+/* ─── PAGE HEADERS: stack on mobile ────────────────────── */
+@media (max-width: 768px) {
+    .page-header,
+    .page-header-section,
+    .section-header {
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 0.75rem !important;
     }
-    .page-header .btn {
-        width: 100%;
-        justify-content: center;
+    .page-header .btn,
+    .page-header-section .btn,
+    .section-header .btn {
+        width: 100% !important;
+        justify-content: center !important;
     }
-    /* Filter rows wrap */
+}
+
+/* ─── FILTER + SEARCH BARS ──────────────────────────────── */
+@media (max-width: 768px) {
     .filters-row,
-    .filter-bar {
+    .filter-bar,
+    .search-filter-row {
         flex-wrap: wrap !important;
         gap: 0.5rem !important;
     }
-    .filter-bar .filter-select,
-    .filters-row .filter-select {
-        flex: 1;
-        min-width: 120px;
+    .search-input-field,
+    .search-bar input {
+        width: 100% !important;
+        font-size: 16px !important;
     }
-    /* Search inputs full width */
-    .search-input-field {
+    .filter-select,
+    .filter-bar select {
+        flex: 1 !important;
+        min-width: 120px !important;
+        font-size: 16px !important;
+    }
+}
+
+/* ─── TABLES: horizontal scroll ─────────────────────────── */
+@media (max-width: 768px) {
+    .table-container,
+    .table-wrapper,
+    .data-table-wrap {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
         width: 100% !important;
     }
-    /* Stat card value */
-    .stat-value {
-        font-size: 1.4rem;
+    table {
+        min-width: 520px;
     }
-    /* Auth card */
-    .auth-card {
-        padding: 1.5rem 1.25rem;
-        margin: 1rem;
-    }
-    /* Dashboard hero compact */
-    .dashboard-hero {
-        padding: 1.25rem;
-        gap: 1rem;
-    }
-    /* Quick action cards */
-    .action-card {
-        min-height: 80px;
-        padding: 1rem;
-    }
-    .action-icon { font-size: 1.5rem; }
-    .action-title { font-size: 0.85rem; }
-    /* Subscription warning banner */
-    #sub-warning-banner {
+    .col-hide-mobile { display: none !important; }
+    /* Action buttons in rows: tighter */
+    td .btn, td button {
+        padding: 0.35rem 0.6rem !important;
         font-size: 12px !important;
-        padding: 8px 12px !important;
-        line-height: 1.4 !important;
+        min-height: 36px !important;
     }
-    /* Bottom nav safe spacing */
-    .main-content {
-        padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+}
+
+/* ─── FORM ROWS: always stack on mobile ─────────────────── */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column !important;
+        gap: 0 !important;
     }
-    /* Tables: action buttons wrap */
-    .table-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
+    .form-group {
+        margin-bottom: 0.875rem;
     }
-    /* Form label size */
-    .form-label {
-        font-size: 14px;
+    /* Prevent iOS input zoom */
+    input, select, textarea, .form-control, .form-input {
+        font-size: 16px !important;
     }
-    /* Cards grid single column */
-    .cards-grid {
+    /* Tall enough touch targets */
+    .btn {
+        min-height: 44px !important;
+    }
+    button { min-height: 40px; }
+}
+
+/* ─── DASHBOARD ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .dashboard-hero {
+        flex-direction: column !important;
+        padding: 1.25rem !important;
+        gap: 1rem !important;
+    }
+    .hero-greeting { font-size: 1.75rem !important; }
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.625rem !important;
+    }
+    .stat-card.wide { grid-column: span 2 !important; }
+    .stat-value { font-size: 1.4rem !important; }
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.625rem !important;
+    }
+    .action-card {
+        padding: 1rem !important;
+        min-height: 80px !important;
+    }
+    .action-icon { font-size: 1.5rem !important; }
+    .action-title { font-size: 0.82rem !important; }
+}
+@media (max-width: 380px) {
+    .stats-grid { grid-template-columns: 1fr !important; }
+    .stat-card.wide { grid-column: span 1 !important; }
+    .hero-greeting { font-size: 1.4rem !important; }
+}
+
+/* ─── PRODUCTS GRID ─────────────────────────────────────── */
+@media (max-width: 768px) {
+    .products-grid-container {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.625rem !important;
+    }
+}
+@media (max-width: 380px) {
+    .products-grid-container {
         grid-template-columns: 1fr !important;
     }
 }
 
-@media (max-width: 380px) {
-    .top-navbar {
-        padding: 0.5rem 0.75rem !important;
+/* ─── AUTH PAGE ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 1.75rem 1.25rem !important;
+        margin: 0.75rem !important;
+        border-radius: 1.25rem !important;
     }
-    .main-content {
-        padding: 0.875rem 0.75rem !important;
-        padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
-    }
-    .stats-grid {
-        gap: 0.5rem !important;
-    }
-    .stat-card {
-        padding: 0.875rem !important;
-    }
-    .quick-actions-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 0.5rem !important;
-    }
-    .hero-greeting {
-        font-size: 1.35rem !important;
-    }
-    .modal-body {
-        max-height: calc(94vh - 110px) !important;
-    }
+    .brand-title { font-size: 1.1rem !important; }
+    .brand-icon svg { width: 44px !important; height: 44px !important; }
 }
 
-/* ===== DEFINITIVE AUTH INPUT ICON FIX — must be last ===== */
+/* ─── AUTH INPUT ICON: definitive fix ───────────────────── */
 .input-wrapper { position: relative !important; display: block !important; }
 .input-wrapper .form-input,
-.input-wrapper input { padding-left: 3rem !important; }
+.input-wrapper input {
+    padding-left: 2.875rem !important;
+    padding-right: 1rem !important;
+}
 .input-icon {
     position: absolute !important;
     left: 0.875rem !important;
@@ -10193,6 +10397,54 @@ body.finance-unlocked .finance-eye-btn {
     z-index: 3 !important;
     display: flex !important;
     align-items: center !important;
-    width: 20px !important;
-    height: 20px !important;
+    justify-content: center !important;
+    width: 18px !important;
+    height: 18px !important;
+    color: var(--color-text-muted) !important;
+}
+.input-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+}
+
+/* ─── SUBSCRIPTION BANNER ───────────────────────────────── */
+@media (max-width: 768px) {
+    #sub-warning-banner {
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+        line-height: 1.5 !important;
+    }
+    /* Push navbar down when banner shows */
+    body:has(#sub-warning-banner) .top-navbar {
+        top: 40px;
+    }
+}
+
+/* ─── SETTINGS MODAL SECTIONS: reachable via scroll ─────── */
+@media (max-width: 768px) {
+    .settings-section {
+        padding-bottom: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    .settings-row {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}
+
+/* ─── NOTIFICATIONS ─────────────────────────────────────── */
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(60px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@media (max-width: 480px) {
+    #global-notification {
+        right: 12px !important;
+        left: 12px !important;
+        max-width: none !important;
+        text-align: center;
+        justify-content: center;
+    }
 }
